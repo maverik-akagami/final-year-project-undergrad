@@ -1,0 +1,50 @@
+## video surveillance
+sudo apt-get upgrade
+sudo apt-get update
+sudo apt-get install gstreamer-tools gstreamer0.10-plugins-bad gstreamer0.10-plugins-good v4l-utils
+sudo apt-get install tcsh
+script gst-server.sh #!/bin/tcsh
+set myip=192.168.0.103
+set port=5000
+set width=320
+set height=240
+gst-launch\
+v4l2src !\
+ffmpegcolorspace !\
+video/x-raw-yuv,width=${width},height=${height},framerate=\(fraction\)30/1 !\
+jpegenc !\
+tcpserversink host=${myip} port=${port} sync=false
+chmod u+x gst-server.sh
+
+##WLAN configuration
+sudo apt-get install bridge-utils hostapd
+wget http://dl.dropbox.com/u/1663660/hostapd/hostapd.zipunzip hostapd.zip
+sudo mv /usr/sbin/hostapd /usr/sbin/hostapd.originalsudo mv hostapd /usr/sbin/hostapd.edimaxsudo ln -sf /usr/sbin/hostapd.edimax /usr/sbin/hostapdsudo chown root.root /usr/sbin/hostapdsudo chmod 755 /usr/sbin/hostapd
+sudo nano /etc/network/interfaces
+auto br0iface br0 inet dhcpbridge_ports eth0 wlan0
+sudo nano /etc/hostapd/hostapd.conf
+interface=wlan0driver=rtl871xdrvbridge=br0ssid=[NETWORK NAME]channel=6wmm_enabled=0wpa=1wpa_passphrase=[PASSWORD]
+wpa_key_mgmt=WPA-PSKwpa_pairwise=TKIPrsn_pairwise=CCMPauth_algs=1macaddr_acl=0
+sudo shutdown -r now
+
+##dnsmasq settings
+sudo apt-get install dnsmasq
+sudo service dnsmasq stop
+new configuration file.
+sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.original
+sudo touch /etc/dnsmasq.conf
+interface=wlan0
+expand-hosts
+domain=local
+dhcp-range=10.0.0.10,10.0.0.20,24h
+dhcp-option=3,10.0.0.1
+sudo nano /etc/network/interfaces
+#auto br0#iface br0 inet dhcp#bridge_ports eth0 wlan0
+iface wlan0 inet static
+address 10.0.0.1
+network 10.0.0.0
+netmask 255.255.255.0
+broadcast 10.0.0.255
+ Reboot the RPi
+sudo shutdown -r now
+
